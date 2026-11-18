@@ -372,7 +372,7 @@ elif st.session_state["page"] == "diagnosis":
           label_visibility="collapsed",
       )
 
-      submitted = st.form_submit_button("Diagnosis")
+      submitted = st.form_submit_button("Diagnosis Pasien")
 
     if submitted:
       total_score = 0.0
