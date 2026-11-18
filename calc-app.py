@@ -226,6 +226,7 @@ elif st.session_state["page"] == "diagnosis":
     with st.form("diagnosis_form"):
       input_data = {}
 
+      # 1. STATUS GIZI
       st.markdown(
           '<label class="navy-label">STATUS GIZI</label>',
           unsafe_allow_html=True,
@@ -233,11 +234,16 @@ elif st.session_state["page"] == "diagnosis":
       input_data["STATUS GIZI"] = st.selectbox(
           "Status Gizi",
           options=[1.0, 2.0, 3.0],
-          format_func=lambda x: f"Nilai {int(x)}",
+          format_func=lambda x: {
+              1.0: "1 (Gizi Baik)",
+              2.0: "2 (Gizi Buruk)",
+              3.0: "3 (Stunting)",
+          }[x],
           key="input_status_gizi",
           label_visibility="collapsed",
       )
 
+      # 2. LOKASI TUMOR
       st.markdown(
           '<label class="navy-label">LOKASI TUMOR</label>',
           unsafe_allow_html=True,
@@ -245,11 +251,16 @@ elif st.session_state["page"] == "diagnosis":
       input_data["LOKASI TUMOR"] = st.selectbox(
           "Lokasi Tumor",
           options=[1.0, 2.0, 3.0],
-          format_func=lambda x: f"Nilai {int(x)}",
+          format_func=lambda x: {
+              1.0: "1 (Supratentorial)",
+              2.0: "2 (Infratentorial)",
+              3.0: "3 (Suprasella)",
+          }[x],
           key="input_lokasi_tumor",
           label_visibility="collapsed",
       )
 
+      # 3. RIW. RESEKSI TUMOR
       st.markdown(
           '<label class="navy-label">RIW. RESEKSI TUMOR</label>',
           unsafe_allow_html=True,
@@ -258,12 +269,15 @@ elif st.session_state["page"] == "diagnosis":
           "Riwayat Reseksi Tumor",
           options=[0.0, 1.0],
           format_func=lambda x: (
-              "Ya (1.0)" if x == 1.0 else "Tidak (0.0)"
+              "0 (Operasi pertama kali)"
+              if x == 0.0
+              else "1 (Pernah operasi >=1)"
           ),
           key="input_riw_reseksi",
           label_visibility="collapsed",
       )
 
+      # 4. VOLUME PERDARAHAN INTRAOP
       st.markdown(
           '<label class="navy-label">VOLUME PERDARAHAN INTRAOP</label>',
           unsafe_allow_html=True,
@@ -277,6 +291,7 @@ elif st.session_state["page"] == "diagnosis":
           label_visibility="collapsed",
       )
 
+      # 5. VOLUME TRANSFUSI INTRAOP
       st.markdown(
           '<label class="navy-label">VOLUME TRANSFUSI INTRAOP</label>',
           unsafe_allow_html=True,
@@ -290,18 +305,22 @@ elif st.session_state["page"] == "diagnosis":
           label_visibility="collapsed",
       )
 
+      # 6. STATUS INTUBASI
       st.markdown(
           '<label class="navy-label">STATUS INTUBASI</label>',
           unsafe_allow_html=True,
       )
       input_data["STATUS INTUBASI"] = st.selectbox(
           "Status Intubasi",
-          options=[0.0, 1.0, 2.0],
-          format_func=lambda x: f"Nilai {x:.1f}",
+          options=[0.0, 1.0],
+          format_func=lambda x: (
+              "0 (Ekstubasi <= 6 jam)" if x == 0.0 else "1 (Terintubasi > 6 jam)"
+          ),
           key="input_status_intubasi",
           label_visibility="collapsed",
       )
 
+      # 7. STATUS VP EVD
       st.markdown(
           '<label class="navy-label">STATUS VP EVD</label>',
           unsafe_allow_html=True,
@@ -309,11 +328,12 @@ elif st.session_state["page"] == "diagnosis":
       input_data["STATUS VP EVD"] = st.selectbox(
           "Status VP EVD",
           options=[0.0, 1.0, 2.0],
-          format_func=lambda x: f"Nilai {x:.1f}",
+          format_func=lambda x: f"Nilai {int(x)}",
           key="input_status_vp_evd",
           label_visibility="collapsed",
       )
 
+      # 8. KOMP. AKUT PASCA OP
       st.markdown(
           '<label class="navy-label">KOMP. AKUT PASCA OP</label>',
           unsafe_allow_html=True,
@@ -321,19 +341,26 @@ elif st.session_state["page"] == "diagnosis":
       input_data["KOMP. AKUT PASCA OP"] = st.selectbox(
           "Komplikasi Akut Pasca Operasi",
           options=[0.0, 1.0],
-          format_func=lambda x: f"Nilai {x:.1f}",
+          format_func=lambda x: (
+              "0 (Tidak ada komplikasi)"
+              if x == 0.0
+              else "1 (Ada Komplikasi >= 1 kejadian)"
+          ),
           key="input_komp_akut",
           label_visibility="collapsed",
       )
 
+      # 9. STATUS HEMODINAMIK
       st.markdown(
           '<label class="navy-label">STATUS HEMODINAMIK</label>',
           unsafe_allow_html=True,
       )
       input_data["STATUS HEMODINAMIK"] = st.selectbox(
           "Status Hemodinamik",
-          options=[0.0, 1.0, 2.0],
-          format_func=lambda x: f"Nilai {x:.1f}",
+          options=[0.0, 1.0],
+          format_func=lambda x: (
+              "0 (Stabil)" if x == 0.0 else "1 (Tidak stabil)"
+          ),
           key="input_status_hemodinamik",
           label_visibility="collapsed",
       )
