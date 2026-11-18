@@ -21,6 +21,13 @@ st.markdown(
         color: #1E5128 !important;
         font-weight: 700 !important;
     }
+    
+    /* Styling khusus agar label teks login & form berwarna hijau tua */
+    label, .stTextInput label, .stSelectbox label, .stNumberInput label {
+        color: #1E5128 !important;
+        font-weight: 700 !important;
+    }
+
     div.stButton > button, div[data-testid="stFormSubmitButton"] > button {
         background-color: #4E9F3D !important;
         color: #ffffff !important;
