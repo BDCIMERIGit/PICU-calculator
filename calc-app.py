@@ -6,7 +6,7 @@ import streamlit as st
 # KONFIGURASI HALAMAN & THEME (HIJAU MUDA)
 # =====================================================
 st.set_page_config(
-    page_title="Kalkulator PICU Score", layout="centered"
+    page_title="Kalkulator Rule-Based PICU Score", layout="centered"
 )
 
 st.markdown(
@@ -131,7 +131,7 @@ def dashboard_nav():
 
 # --- HOME ---
 if st.session_state["page"] == "home":
-  st.title("🏥 Kalkulator PICU Score")
+  st.title("🏥 Kalkulator Rule-Based PICU Score")
   st.markdown("### Sistem Penilaian Risiko Berbasis Aturan & Bobot Skor Tetap")
   st.write("Silakan masuk menggunakan akun tenaga medis.")
   if st.button("Mulai Aplikasi", key="btn_home_start"):
@@ -368,7 +368,6 @@ elif st.session_state["page"] == "diagnosis":
       submitted = st.form_submit_button("Hitung Skor")
 
     if submitted:
-      scoring_details = []
       total_score = 0.0
 
       for feat, weight_val in SCORE_WEIGHTS.items():
@@ -376,25 +375,13 @@ elif st.session_state["page"] == "diagnosis":
         contrib = val_input * weight_val
         total_score += contrib
 
-        scoring_details.append({
-            "Feature": feat,
-            "Nilai Input": f"{val_input:.2f}",
-            "Score Weight": f"{weight_val:.2f}",
-            "Perhitungan": f"{val_input:.2f} × {weight_val:.2f}",
-            "Total Score": f"{contrib:.2f}",
-        })
-
       prediction_label = (
           "> 24 Jam" if total_score >= THRESHOLD_SCORE else "< 24 Jam"
       )
 
       st.markdown("---")
-      st.subheader("📊 Scoring Result")
+      st.subheader("📊 Hasil Penilaian Risiko PICU")
 
-      df_table = pd.DataFrame(scoring_details)
-      st.dataframe(df_table, use_container_width=True)
-
-      st.markdown("---")
       col_res1, col_res2 = st.columns(2)
       with col_res1:
         st.markdown(f"**TOTAL SKOR:** `{total_score:.2f}`")
@@ -430,7 +417,7 @@ elif st.session_state["page"] == "history":
     st.warning("Silakan login terlebih dahulu.")
     go_to("login")
   else:
-    st.title("📋 Riwayat Diagnosis")
+    st.title("📋 Riwayat Diagnosis Rule-Based")
     dashboard_nav()
     st.markdown("---")
 
