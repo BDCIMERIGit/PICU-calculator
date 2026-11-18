@@ -381,7 +381,7 @@ elif st.session_state["page"] == "diagnosis":
             "Nilai Input": f"{val_input:.2f}",
             "Score Weight": f"{weight_val:.2f}",
             "Perhitungan": f"{val_input:.2f} × {weight_val:.2f}",
-            "Total Kontribusi": f"{contrib:.2f}",
+            "Total Score": f"{contrib:.2f}",
         })
 
       prediction_label = (
