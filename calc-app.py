@@ -67,7 +67,6 @@ st.markdown(
 # =====================================================
 # 1️⃣ KAMUS BOBOT SKOR (SCORE WEIGHT) TETAP
 # =====================================================
-# Berdasarkan koefisien model Anda yang dinormalkan ke skala bobot
 SCORE_WEIGHTS = {
     "STATUS GIZI": -75.15,
     "LOKASI TUMOR": -36.65,
@@ -135,15 +134,15 @@ if st.session_state["page"] == "home":
   st.title("🏥 Kalkulator Rule-Based PICU Score")
   st.markdown("### Sistem Penilaian Risiko Berbasis Aturan & Bobot Skor Tetap")
   st.write("Silakan masuk menggunakan akun tenaga medis.")
-  if st.button("Mulai Aplikasi"):
+  if st.button("Mulai Aplikasi", key="btn_home_start"):
     go_to("login")
 
 # --- LOGIN ---
 elif st.session_state["page"] == "login":
   st.header("🔐 Login Tenaga Medis")
   with st.form("login_form"):
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input("Password", type="password", key="login_password")
     submitted = st.form_submit_button("Masuk")
 
   if submitted:
@@ -156,7 +155,7 @@ elif st.session_state["page"] == "login":
     else:
       st.error("Username atau password salah.")
 
-  if st.button("Kembali ke Beranda"):
+  if st.button("Kembali ke Beranda", key="btn_login_back"):
     go_to("home")
 
 # --- DASHBOARD ---
@@ -189,7 +188,7 @@ elif st.session_state["page"] == "dashboard":
         st.dataframe(df_recent, use_container_width=True)
 
     st.markdown("---")
-    if st.button("Log Out"):
+    if st.button("Log Out", key="btn_logout"):
       st.session_state["logged_in"] = False
       st.session_state["username"] = None
       go_to("login")
@@ -211,7 +210,7 @@ elif st.session_state["page"] == "profile":
     st.write("**Email:**", user.get("email", "-"))
     st.write("**No HP:**", user.get("phone", "-"))
     st.markdown("---")
-    if st.button("Kembali ke Dashboard"):
+    if st.button("Kembali ke Dashboard", key="btn_profile_back"):
       go_to("dashboard")
 
 # --- DIAGNOSIS (RULE-BASED SCORING) ---
@@ -232,7 +231,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["STATUS GIZI"] = st.selectbox(
-          "", options=[1.0, 2.0, 3.0], format_func=lambda x: f"Nilai {int(x)}"
+          "Status Gizi",
+          options=[1.0, 2.0, 3.0],
+          format_func=lambda x: f"Nilai {int(x)}",
+          key="input_status_gizi",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -240,7 +243,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["LOKASI TUMOR"] = st.selectbox(
-          "", options=[1.0, 2.0, 3.0], format_func=lambda x: f"Nilai {int(x)}"
+          "Lokasi Tumor",
+          options=[1.0, 2.0, 3.0],
+          format_func=lambda x: f"Nilai {int(x)}",
+          key="input_lokasi_tumor",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -248,11 +255,13 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["RIW. RESEKSI TUMOR"] = st.selectbox(
-          "",
+          "Riwayat Reseksi Tumor",
           options=[0.0, 1.0],
           format_func=lambda x: (
               "Ya (1.0)" if x == 1.0 else "Tidak (0.0)"
           ),
+          key="input_riw_reseksi",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -260,7 +269,12 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["VOLUME PERDARAHAN INTRAOP"] = st.number_input(
-          "", min_value=0.0, value=100.0, step=10.0
+          "Volume Perdarahan Intraop",
+          min_value=0.0,
+          value=100.0,
+          step=10.0,
+          key="input_vol_perdarahan",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -268,7 +282,12 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["VOLUME TRANSFUSI INTRAOP"] = st.number_input(
-          "", min_value=0.0, value=0.0, step=10.0
+          "Volume Transfusi Intraop",
+          min_value=0.0,
+          value=0.0,
+          step=10.0,
+          key="input_vol_transfusi",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -276,9 +295,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["STATUS INTUBASI"] = st.selectbox(
-          "",
+          "Status Intubasi",
           options=[0.0, 1.0, 2.0],
           format_func=lambda x: f"Nilai {x:.1f}",
+          key="input_status_intubasi",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -286,9 +307,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["STATUS VP EVD"] = st.selectbox(
-          "",
+          "Status VP EVD",
           options=[0.0, 1.0, 2.0],
           format_func=lambda x: f"Nilai {x:.1f}",
+          key="input_status_vp_evd",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -296,9 +319,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["KOMP. AKUT PASCA OP"] = st.selectbox(
-          "",
+          "Komplikasi Akut Pasca Operasi",
           options=[0.0, 1.0],
           format_func=lambda x: f"Nilai {x:.1f}",
+          key="input_komp_akut",
+          label_visibility="collapsed",
       )
 
       st.markdown(
@@ -306,9 +331,11 @@ elif st.session_state["page"] == "diagnosis":
           unsafe_allow_html=True,
       )
       input_data["STATUS HEMODINAMIK"] = st.selectbox(
-          "",
+          "Status Hemodinamik",
           options=[0.0, 1.0, 2.0],
           format_func=lambda x: f"Nilai {x:.1f}",
+          key="input_status_hemodinamik",
+          label_visibility="collapsed",
       )
 
       submitted = st.form_submit_button("Hitung Skor")
@@ -363,10 +390,10 @@ elif st.session_state["page"] == "diagnosis":
       st.markdown("---")
       col_a, col_b = st.columns(2)
       with col_a:
-        if st.button("Diagnosis Pasien Lain"):
+        if st.button("Diagnosis Pasien Lain", key="btn_diag_again"):
           st.rerun()
       with col_b:
-        if st.button("Lihat Riwayat"):
+        if st.button("Lihat Riwayat", key="btn_diag_to_history"):
           go_to("history")
           st.rerun()
 
@@ -388,11 +415,11 @@ elif st.session_state["page"] == "history":
 
     col1, col2 = st.columns(2)
     with col1:
-      if st.button("Lakukan Diagnosis Baru"):
+      if st.button("Lakukan Diagnosis Baru", key="btn_hist_new"):
         go_to("diagnosis")
         st.rerun()
     with col2:
-      if st.button("Logout"):
+      if st.button("Logout", key="btn_hist_logout"):
         st.session_state["logged_in"] = False
         go_to("login")
         st.rerun()
