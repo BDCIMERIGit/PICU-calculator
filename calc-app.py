@@ -6,7 +6,7 @@ import streamlit as st
 # KONFIGURASI HALAMAN & THEME (HIJAU MUDA)
 # =====================================================
 st.set_page_config(
-    page_title="Kalkulator Rule-Based PICU Score", layout="centered"
+    page_title="Kalkulator PICU Score", layout="centered"
 )
 
 st.markdown(
@@ -138,7 +138,7 @@ def dashboard_nav():
 
 # --- HOME ---
 if st.session_state["page"] == "home":
-  st.title("🏥 Kalkulator Rule-Based PICU Score")
+  st.title("🏥 Kalkulator PICU Score")
   st.markdown("### Sistem Penilaian Risiko Berbasis Aturan & Bobot Skor Tetap")
   st.write("Silakan masuk menggunakan akun tenaga medis.")
   if st.button("Mulai Aplikasi", key="btn_home_start"):
@@ -220,7 +220,7 @@ elif st.session_state["page"] == "profile":
     if st.button("Kembali ke Dashboard", key="btn_profile_back"):
       go_to("dashboard")
 
-# --- DIAGNOSIS (RULE-BASED SCORING) ---
+# --- DIAGNOSIS (SCORING SYSTEM) ---
 elif st.session_state["page"] == "diagnosis":
   if not st.session_state["logged_in"]:
     st.warning("Silakan login terlebih dahulu.")
@@ -424,7 +424,7 @@ elif st.session_state["page"] == "history":
     st.warning("Silakan login terlebih dahulu.")
     go_to("login")
   else:
-    st.title("📋 Riwayat Diagnosis Rule-Based")
+    st.title("📋 Riwayat Diagnosis")
     dashboard_nav()
     st.markdown("---")
 
