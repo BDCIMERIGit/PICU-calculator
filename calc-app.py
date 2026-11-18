@@ -1,0 +1,398 @@
+from datetime import datetime
+import pandas as pd
+import streamlit as st
+
+# =====================================================
+# KONFIGURASI HALAMAN & THEME (HIJAU MUDA)
+# =====================================================
+st.set_page_config(
+    page_title="Kalkulator Rule-Based PICU Score", layout="centered"
+)
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #F4FBF7 !important;
+        color: #000000 !important;
+        font-family: 'Helvetica', sans-serif;
+    }
+    h1, h2, h3, h4 {
+        color: #1E5128 !important;
+        font-weight: 700 !important;
+    }
+    div.stButton > button, div[data-testid="stFormSubmitButton"] > button {
+        background-color: #4E9F3D !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.6em 1.2em !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+    div.stButton > button:hover, div[data-testid="stFormSubmitButton"] > button:hover {
+        background-color: #1E5128 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
+    .navy-label {
+        color: #1E5128;
+        font-weight: 700;
+        margin-bottom: 6px;
+        display: block;
+        font-size: 0.95rem;
+    }
+    .welcome-box {
+        background-color: #D8F3DC;
+        color: #1E5128;
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 4px solid #4E9F3D;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    .nav-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =====================================================
+# 1️⃣ KAMUS BOBOT SKOR (SCORE WEIGHT) TETAP
+# =====================================================
+# Berdasarkan koefisien model Anda yang dinormalkan ke skala bobot
+SCORE_WEIGHTS = {
+    "STATUS GIZI": -75.15,
+    "LOKASI TUMOR": -36.65,
+    "RIW. RESEKSI TUMOR": 100.00,
+    "VOLUME PERDARAHAN INTRAOP": 16.48,
+    "VOLUME TRANSFUSI INTRAOP": 57.77,
+    "STATUS INTUBASI": 59.08,
+    "STATUS VP EVD": -39.26,
+    "KOMP. AKUT PASCA OP": 94.68,
+    "STATUS HEMODINAMIK": 62.70,
+}
+
+THRESHOLD_SCORE = 50.19
+
+# =====================================================
+# 2️⃣ SESSION INITIALIZATION
+# =====================================================
+if "users" not in st.session_state:
+  st.session_state["users"] = {
+      "abdulchairy": {
+          "name": "dr. Abdul Chairy",
+          "instansi": "RS Cipto Mangunkusumo",
+          "email": "abdul.chairy@rs-cipto.go.id",
+          "phone": "081234567890",
+          "password": "123456",
+          "jadwal": "Senin - Jumat. 08:00 - 14:00",
+      }
+  }
+
+if "logged_in" not in st.session_state:
+  st.session_state["logged_in"] = False
+  st.session_state["username"] = None
+
+if "history" not in st.session_state:
+  st.session_state["history"] = []
+
+if "page" not in st.session_state:
+  st.session_state["page"] = "home"
+
+
+def go_to(page):
+  st.session_state["page"] = page
+
+
+def dashboard_nav():
+  cols = st.columns(4)
+  labels = [
+      ("Home", "dashboard"),
+      ("Profile", "profile"),
+      ("Diagnosis", "diagnosis"),
+      ("Riwayat", "history"),
+  ]
+  for c, (label, page_name) in zip(cols, labels):
+    with c:
+      if st.button(label, key=f"nav_{page_name}"):
+        go_to(page_name)
+
+
+# =====================================================
+# 3️⃣ ROUTING HALAMAN
+# =====================================================
+
+# --- HOME ---
+if st.session_state["page"] == "home":
+  st.title("🏥 Kalkulator Rule-Based PICU Score")
+  st.markdown("### Sistem Penilaian Risiko Berbasis Aturan & Bobot Skor Tetap")
+  st.write("Silakan masuk menggunakan akun tenaga medis.")
+  if st.button("Mulai Aplikasi"):
+    go_to("login")
+
+# --- LOGIN ---
+elif st.session_state["page"] == "login":
+  st.header("🔐 Login Tenaga Medis")
+  with st.form("login_form"):
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    submitted = st.form_submit_button("Masuk")
+
+  if submitted:
+    user = st.session_state["users"].get(username)
+    if user and user["password"] == password:
+      st.session_state["logged_in"] = True
+      st.session_state["username"] = username
+      go_to("dashboard")
+      st.rerun()
+    else:
+      st.error("Username atau password salah.")
+
+  if st.button("Kembali ke Beranda"):
+    go_to("home")
+
+# --- DASHBOARD ---
+elif st.session_state["page"] == "dashboard":
+  if not st.session_state["logged_in"]:
+    st.warning("Silakan login terlebih dahulu.")
+    go_to("login")
+  else:
+    user = st.session_state["users"].get(st.session_state["username"], {})
+    st.title("Dashboard Utama")
+    dashboard_nav()
+    st.markdown("---")
+
+    st.markdown(
+        f'<div class="welcome-box">Selamat datang, {user.get("name", "-")}!</div>',
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns([2, 3])
+    with col1:
+      st.write("**Nama:**", user.get("name", "-"))
+      st.write("**Instansi:**", user.get("instansi", "-"))
+      st.write("**Jadwal Praktek:**", user.get("jadwal", "-"))
+    with col2:
+      st.write("**Riwayat Diagnosis Terbaru**")
+      if len(st.session_state["history"]) == 0:
+        st.info("Belum ada riwayat diagnosis.")
+      else:
+        df_recent = pd.DataFrame(st.session_state["history"]).tail(5)
+        st.dataframe(df_recent, use_container_width=True)
+
+    st.markdown("---")
+    if st.button("Log Out"):
+      st.session_state["logged_in"] = False
+      st.session_state["username"] = None
+      go_to("login")
+      st.rerun()
+
+# --- PROFILE ---
+elif st.session_state["page"] == "profile":
+  if not st.session_state["logged_in"]:
+    st.warning("Silakan login terlebih dahulu.")
+    go_to("login")
+  else:
+    user = st.session_state["users"].get(st.session_state["username"], {})
+    st.title("Profil Pengguna")
+    dashboard_nav()
+    st.markdown("---")
+    st.write("**Nama:**", user.get("name", "-"))
+    st.write("**Instansi:**", user.get("instansi", "-"))
+    st.write("**Jadwal Praktek:**", user.get("jadwal", "-"))
+    st.write("**Email:**", user.get("email", "-"))
+    st.write("**No HP:**", user.get("phone", "-"))
+    st.markdown("---")
+    if st.button("Kembali ke Dashboard"):
+      go_to("dashboard")
+
+# --- DIAGNOSIS (RULE-BASED SCORING) ---
+elif st.session_state["page"] == "diagnosis":
+  if not st.session_state["logged_in"]:
+    st.warning("Silakan login terlebih dahulu.")
+    go_to("login")
+  else:
+    st.title("Diagnosis - 9 Variabel Klinis Pasien")
+    dashboard_nav()
+    st.markdown("---")
+
+    with st.form("diagnosis_form"):
+      input_data = {}
+
+      st.markdown(
+          '<label class="navy-label">STATUS GIZI</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["STATUS GIZI"] = st.selectbox(
+          "", options=[1.0, 2.0, 3.0], format_func=lambda x: f"Nilai {int(x)}"
+      )
+
+      st.markdown(
+          '<label class="navy-label">LOKASI TUMOR</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["LOKASI TUMOR"] = st.selectbox(
+          "", options=[1.0, 2.0, 3.0], format_func=lambda x: f"Nilai {int(x)}"
+      )
+
+      st.markdown(
+          '<label class="navy-label">RIW. RESEKSI TUMOR</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["RIW. RESEKSI TUMOR"] = st.selectbox(
+          "",
+          options=[0.0, 1.0],
+          format_func=lambda x: (
+              "Ya (1.0)" if x == 1.0 else "Tidak (0.0)"
+          ),
+      )
+
+      st.markdown(
+          '<label class="navy-label">VOLUME PERDARAHAN INTRAOP</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["VOLUME PERDARAHAN INTRAOP"] = st.number_input(
+          "", min_value=0.0, value=100.0, step=10.0
+      )
+
+      st.markdown(
+          '<label class="navy-label">VOLUME TRANSFUSI INTRAOP</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["VOLUME TRANSFUSI INTRAOP"] = st.number_input(
+          "", min_value=0.0, value=0.0, step=10.0
+      )
+
+      st.markdown(
+          '<label class="navy-label">STATUS INTUBASI</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["STATUS INTUBASI"] = st.selectbox(
+          "",
+          options=[0.0, 1.0, 2.0],
+          format_func=lambda x: f"Nilai {x:.1f}",
+      )
+
+      st.markdown(
+          '<label class="navy-label">STATUS VP EVD</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["STATUS VP EVD"] = st.selectbox(
+          "",
+          options=[0.0, 1.0, 2.0],
+          format_func=lambda x: f"Nilai {x:.1f}",
+      )
+
+      st.markdown(
+          '<label class="navy-label">KOMP. AKUT PASCA OP</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["KOMP. AKUT PASCA OP"] = st.selectbox(
+          "",
+          options=[0.0, 1.0],
+          format_func=lambda x: f"Nilai {x:.1f}",
+      )
+
+      st.markdown(
+          '<label class="navy-label">STATUS HEMODINAMIK</label>',
+          unsafe_allow_html=True,
+      )
+      input_data["STATUS HEMODINAMIK"] = st.selectbox(
+          "",
+          options=[0.0, 1.0, 2.0],
+          format_func=lambda x: f"Nilai {x:.1f}",
+      )
+
+      submitted = st.form_submit_button("Hitung Skor")
+
+    if submitted:
+      scoring_details = []
+      total_score = 0.0
+
+      for feat, weight_val in SCORE_WEIGHTS.items():
+        val_input = float(input_data.get(feat, 0.0))
+        contrib = val_input * weight_val
+        total_score += contrib
+
+        scoring_details.append({
+            "Feature": feat,
+            "Nilai Input": f"{val_input:.2f}",
+            "Score Weight": f"{weight_val:.2f}",
+            "Perhitungan": f"{val_input:.2f} × {weight_val:.2f}",
+            "Total Kontribusi": f"{contrib:.2f}",
+        })
+
+      prediction_label = (
+          "> 24 Jam" if total_score >= THRESHOLD_SCORE else "< 24 Jam"
+      )
+
+      st.markdown("---")
+      st.subheader("📊 Scoring Result (Rule-Based)")
+
+      df_table = pd.DataFrame(scoring_details)
+      st.dataframe(df_table, use_container_width=True)
+
+      st.markdown("---")
+      col_res1, col_res2 = st.columns(2)
+      with col_res1:
+        st.markdown(f"**TOTAL SKOR:** `{total_score:.2f}`")
+        st.markdown(f"**Youden Index Threshold:** `{THRESHOLD_SCORE}`")
+      with col_res2:
+        if total_score >= THRESHOLD_SCORE:
+          st.success(f"**Kategori Risiko:** {prediction_label}")
+        else:
+          st.warning(f"**Kategori Risiko:** {prediction_label}")
+
+      # Simpan ke riwayat
+      record = {
+          "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+          **input_data,
+          "Total Skor": f"{total_score:.2f}",
+          "Kategori Risiko": prediction_label,
+      }
+      st.session_state["history"].append(record)
+
+      st.markdown("---")
+      col_a, col_b = st.columns(2)
+      with col_a:
+        if st.button("Diagnosis Pasien Lain"):
+          st.rerun()
+      with col_b:
+        if st.button("Lihat Riwayat"):
+          go_to("history")
+          st.rerun()
+
+# --- RIWAYAT ---
+elif st.session_state["page"] == "history":
+  if not st.session_state["logged_in"]:
+    st.warning("Silakan login terlebih dahulu.")
+    go_to("login")
+  else:
+    st.title("📋 Riwayat Diagnosis Rule-Based")
+    dashboard_nav()
+    st.markdown("---")
+
+    if len(st.session_state["history"]) == 0:
+      st.info("Belum ada riwayat diagnosis tersimpan.")
+    else:
+      df_hist = pd.DataFrame(st.session_state["history"])
+      st.dataframe(df_hist, use_container_width=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+      if st.button("Lakukan Diagnosis Baru"):
+        go_to("diagnosis")
+        st.rerun()
+    with col2:
+      if st.button("Logout"):
+        st.session_state["logged_in"] = False
+        go_to("login")
+        st.rerun()
