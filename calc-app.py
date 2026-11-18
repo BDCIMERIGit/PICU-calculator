@@ -226,7 +226,7 @@ elif st.session_state["page"] == "diagnosis":
     st.warning("Silakan login terlebih dahulu.")
     go_to("login")
   else:
-    st.title("Diagnosis - 9 Variabel Klinis Pasien")
+    st.title("Diagnosis - Input Data Pasien")
     dashboard_nav()
     st.markdown("---")
 
